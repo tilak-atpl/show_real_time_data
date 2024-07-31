@@ -1,3 +1,5 @@
+
+require('dotenv').config()
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -48,8 +50,8 @@ const tcpServer = net.createServer((socket) => {
   });
 });
 
-tcpServer.listen(3001, () => {
-  console.log('TCP server listening on port 3001');
+tcpServer.listen(process.env.TCP_PORT, () => {
+  console.log(`TCP server listening on port ${process.env.TCP_PORT}`);
 });
 
 const PORT = process.env.PORT || 3000;
