@@ -1,42 +1,66 @@
-
-require('dotenv').config()
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const net = require('net');
+const bodyParser = require('body-parser');
+
+
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
+// Middleware to parse JSON bodies
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Serve static files from the 'public' directory
 app.use(express.static('public'));
 
+// API endpoint to receive data via HTTP POST
+app.post('/api/data', (req, res) => {
+     const data = req.body;
+     console.log('Received data via API:', data);
+   
+     // Emit data to all connected clients
+     io.emit('data', data);
+   
+     res.status(200).send('Data received');
+   });
+
 // Socket.io connection
 io.on('connection', (socket) => {
-  console.log('A user connected');
-
-  // Handle incoming data from Socket.io
-  socket.on('sendData', (data) => {
-    console.log('Received data via WebSocket:', data);
-    io.emit('data', data);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected');
-  });
-});
+     console.log('A user connected');
+   
+     // Handle custom WebSocket messages
+     socket.on('message', (message) => {
+        console.log('socket.on', message);
+       try {
+         const { event, data } = JSON.parse(message);
+         if (event === 'sendData') {
+           console.log('Received data:', data);
+           // Emit data to all connected clients
+           io.emit('data', data);
+         }
+       } catch (err) {
+         console.error('Invalid message format:', message);
+         io.emit('data', message);
+       }
+     });
+   
+     socket.on('disconnect', () => {
+       console.log('User disconnected');
+     });
+   })
 
 // Create a TCP server
 const tcpServer = net.createServer((socket) => {
-  console.log('TCP client connected');
+  console.log('A TCP client connected');
 
   socket.on('data', (data) => {
     const receivedData = data.toString().trim();
     console.log('Received data via TCP:', receivedData);
 
-    // Optionally, parse the data if it's in a specific format
-    // For now, we'll just emit it as-is
+    // Emit received data to all connected WebSocket clients
     io.emit('data', { message: receivedData });
   });
 
@@ -46,12 +70,11 @@ const tcpServer = net.createServer((socket) => {
 
   socket.on('error', (err) => {
     console.error('TCP client error:', err);
-    io.emit('data', { message: err });
   });
 });
 
-tcpServer.listen(process.env.TCP_PORT, () => {
-  console.log(`TCP server listening on port ${process.env.TCP_PORT}`);
+tcpServer.listen(3001, () => {
+  console.log('TCP server listening on port 3001');
 });
 
 const PORT = process.env.PORT || 3000;

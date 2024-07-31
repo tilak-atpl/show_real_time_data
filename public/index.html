@@ -23,8 +23,8 @@
       dataDisplay.appendChild(dataElement);
     });
 
-    // Function to send data to the server
-    function sendData() {
+     // Function to send data to the server
+     function sendData() {
       const inputData = document.getElementById('inputData').value;
       socket.emit('message', JSON.stringify({
         event: 'sendData',
