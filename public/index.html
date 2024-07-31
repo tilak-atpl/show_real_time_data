@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Data Display</title>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <h1>Real-Time Data Display</h1>
+  <div id="dataDisplay"></div>
+  <input type="text" id="inputData" placeholder="Enter data to send">
+  <button onclick="sendData()">Send Data</button>
+
+  <script>
+    const socket = io();
+    const dataDisplay = document.getElementById('dataDisplay');
+
+    // Listen for 'data' events from the server
+    socket.on('data', (data) => {
+      const dataElement = document.createElement('p');
+      dataElement.textContent = JSON.stringify(data);
+      dataDisplay.appendChild(dataElement);
+    });
+
+    // Function to send data to the server
+    function sendData() {
+      const inputData = document.getElementById('inputData').value;
+      socket.emit('message', JSON.stringify({
+        event: 'sendData',
+        data: { message: inputData }
+      }));
+    }
+  </script>
+</body>
+</html>
